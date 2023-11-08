@@ -1,56 +1,40 @@
-from mesa import Model, agent
-from mesa.time import RandomActivation
-from mesa.space import MultiGrid
-from mesa import DataCollector
-from agent import RandomAgent, ObstacleAgent
+import mesa
+from mesa import Model, DataCollector
+from mesa.space import SingleGrid
+from mesa.time import SimultaneousActivation
 
-class RandomModel(Model):
-    """ 
-    Creates a new model with random agents.
-    Args:
-        N: Number of agents in the simulation
-        height, width: The size of the grid to model
-    """
-    def __init__(self, N, width, height):
-        self.num_agents = N
-        # Multigrid is a special type of grid where each cell can contain multiple agents.
-        self.grid = MultiGrid(width,height,torus = False) 
+from agent import TreeCell
 
-        # RandomActivation is a scheduler that activates each agent once per step, in random order.
-        self.schedule = RandomActivation(self)
+class ForestFire(Model):
+    def _init_(self, height=50, width=50, density=0.65):
+        self.schedule = SimultaneousActivation(self)
+        self.grid = SingleGrid(height, width, torus=False)
         
-        self.running = True 
+        self.datacollector = DataCollector(
+            {
+                "Alive": lambda m: self.count_type(m, "Alive"),
+                "Dead": lambda m: self.count_type(m, "Dead"),
+            }
+        )
 
-        self.datacollector = DataCollector( 
-        agent_reporters={"Steps": lambda a: a.steps_taken if isinstance(a, RandomAgent) else 0})
+        for contents, (x, y) in self.grid.coord_iter():
+            new_tree = TreeCell((x, y), self, density)
+            if self.random.random() < density:
+                new_tree.condition = "Alive"
+            self.grid.place_agent(new_tree, (x, y))
+            self.schedule.add(new_tree)
 
-        # Creates the border of the grid
-        border = [(x,y) for y in range(height) for x in range(width) if y in [0, height-1] or x in [0, width - 1]]
-
-        # Add obstacles to the grid
-        for pos in border:
-            obs = ObstacleAgent(pos, self)
-            self.grid.place_agent(obs, pos)
-
-        # Function to generate random positions
-        pos_gen = lambda w, h: (self.random.randrange(w), self.random.randrange(h))
-
-        # Add the agent to a random empty grid cell
-        for i in range(self.num_agents):
-
-            a = RandomAgent(i+1000, self) 
-            self.schedule.add(a)
-
-            pos = pos_gen(self.grid.width, self.grid.height)
-
-            while (not self.grid.is_cell_empty(pos)):
-                pos = pos_gen(self.grid.width, self.grid.height)
-
-            self.grid.place_agent(a, pos)
-        
+        self.running = True
         self.datacollector.collect(self)
 
     def step(self):
-        '''Advance the model by one step.'''
         self.schedule.step()
         self.datacollector.collect(self)
+        
+    @staticmethod
+    def count_type(model, tree_condition):
+        count = 0
+        for tree in model.schedule.agents:
+            if tree.condition == tree_condition:
+                count += 1
+        return count
