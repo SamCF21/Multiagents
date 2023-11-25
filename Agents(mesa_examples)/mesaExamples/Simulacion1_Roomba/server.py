@@ -1,3 +1,5 @@
+#Samantha Covarrubias - A01026174
+
 from model import RandomModel, Trash, Roomba, ObstacleAgent, Charger
 from mesa.visualization import CanvasGrid, ChartModule
 from mesa.visualization import ModularServer

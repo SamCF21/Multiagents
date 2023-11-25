@@ -1,3 +1,5 @@
+#Samantha Covarrubias - A01026174
+
 from mesa import Agent
 import networkx as nx
 

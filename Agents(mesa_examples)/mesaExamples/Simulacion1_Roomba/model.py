@@ -1,3 +1,5 @@
+#Samantha Covarrubias - A01026174
+
 from mesa import Model, agent
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid

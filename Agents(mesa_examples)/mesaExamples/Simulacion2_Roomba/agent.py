@@ -1,3 +1,5 @@
+#Samantha Covarrubias - A01026174
+
 from mesa import Agent
 import networkx as nx
 
@@ -66,10 +68,9 @@ class Roomba(Agent):
         dirty = [position for position in possible_steps if any(isinstance(agent, Trash) for agent in self.model.grid.get_cell_list_contents([position]))]
 
         if dirty:
-            # Choose one dirty cell to move towards (for simplicity, it picks the first one)
             next_move = dirty[0]
         else:
-            #Choose from unvisited and truly empty cells
+            #Choose from unvisited empty cells
             cells_to_visit = [cell for cell in possible_steps if cell not in self.visited_positions and self.model.grid.is_cell_empty(cell) and not any(isinstance(agent, ObstacleAgent) for agent in self.model.grid.get_cell_list_contents([cell]))]
 
             if cells_to_visit:
